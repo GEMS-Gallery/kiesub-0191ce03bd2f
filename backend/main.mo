@@ -8,6 +8,7 @@ import Nat "mo:base/Nat";
 import Float "mo:base/Float";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
+import Debug "mo:base/Debug";
 
 actor {
   type Item = {
@@ -29,6 +30,13 @@ actor {
   let items = HashMap.HashMap<Nat, Item>(10, Nat.equal, Hash.hash);
 
   public func addItem(name: Text, description: ?Text, price: Float, stock: Nat, category: Category): async Result.Result<Nat, Text> {
+    Debug.print("Attempting to add item: " # debug_show({ name; description; price; stock; category }));
+    if (Text.size(name) == 0) {
+      return #err("Name cannot be empty");
+    };
+    if (price < 0) {
+      return #err("Price cannot be negative");
+    };
     let id = nextItemId;
     nextItemId += 1;
     let newItem: Item = {
@@ -40,6 +48,7 @@ actor {
       category;
     };
     items.put(id, newItem);
+    Debug.print("Item added successfully: " # debug_show(newItem));
     #ok(id)
   };
 

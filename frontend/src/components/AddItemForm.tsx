@@ -20,6 +20,8 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem }) => {
   const onSubmit = (data: FormData) => {
     onAddItem({
       ...data,
+      price: Number(data.price),
+      stock: Number(data.stock),
       category: { [data.category]: null } as any,
     });
     reset();

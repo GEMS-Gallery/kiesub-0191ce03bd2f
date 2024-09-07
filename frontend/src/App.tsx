@@ -30,8 +30,8 @@ const App: React.FC = () => {
       const result = await backend.getItems();
       setItems(result.map(item => ({
         ...item,
-        id: Number(item.id),
-        stock: Number(item.stock),
+        id: BigInt(item.id),
+        stock: BigInt(item.stock),
         price: Number(item.price)
       })));
     } catch (error) {
@@ -44,18 +44,24 @@ const App: React.FC = () => {
 
   const handleAddItem = async (newItem: Omit<Item, 'id'>) => {
     try {
-      await backend.addItem(
+      console.log('Sending item data:', newItem);
+      const result = await backend.addItem(
         newItem.name,
         newItem.description,
-        newItem.price,
+        Number(newItem.price),
         BigInt(newItem.stock),
         newItem.category
       );
-      await fetchItems();
-      setSnackbar({ open: true, message: 'Item added successfully', severity: 'success' });
+      console.log('Backend response:', result);
+      if ('ok' in result) {
+        await fetchItems();
+        setSnackbar({ open: true, message: 'Item added successfully', severity: 'success' });
+      } else {
+        setSnackbar({ open: true, message: `Error adding item: ${result.err}`, severity: 'error' });
+      }
     } catch (error) {
       console.error('Error adding item:', error);
-      setSnackbar({ open: true, message: 'Error adding item', severity: 'error' });
+      setSnackbar({ open: true, message: `Error adding item: ${error}`, severity: 'error' });
     }
   };
 
