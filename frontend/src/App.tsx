@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, CircularProgress } from '@mui/material';
+import { Container, Typography, Box, CircularProgress, Snackbar, Alert } from '@mui/material';
 import { backend } from 'declarations/backend';
 import InventoryList from './components/InventoryList';
 import AddItemForm from './components/AddItemForm';
@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     fetchItems();
@@ -35,6 +36,7 @@ const App: React.FC = () => {
       })));
     } catch (error) {
       console.error('Error fetching items:', error);
+      setSnackbar({ open: true, message: 'Error fetching items', severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -49,33 +51,43 @@ const App: React.FC = () => {
         BigInt(newItem.stock),
         newItem.category
       );
-      fetchItems();
+      await fetchItems();
+      setSnackbar({ open: true, message: 'Item added successfully', severity: 'success' });
     } catch (error) {
       console.error('Error adding item:', error);
+      setSnackbar({ open: true, message: 'Error adding item', severity: 'error' });
     }
   };
 
   const handleUpdateStock = async (id: bigint, newStock: bigint) => {
     try {
       await backend.updateItemStock(id, newStock);
-      fetchItems();
+      await fetchItems();
+      setSnackbar({ open: true, message: 'Stock updated successfully', severity: 'success' });
     } catch (error) {
       console.error('Error updating stock:', error);
+      setSnackbar({ open: true, message: 'Error updating stock', severity: 'error' });
     }
   };
 
   const handleDeleteItem = async (id: bigint) => {
     try {
       await backend.deleteItem(id);
-      fetchItems();
+      await fetchItems();
+      setSnackbar({ open: true, message: 'Item deleted successfully', severity: 'success' });
     } catch (error) {
       console.error('Error deleting item:', error);
+      setSnackbar({ open: true, message: 'Error deleting item', severity: 'error' });
     }
   };
 
   const filteredItems = selectedCategory
     ? items.filter(item => Object.keys(item.category)[0] === selectedCategory)
     : items;
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   return (
     <Container maxWidth="lg">
@@ -100,6 +112,11 @@ const App: React.FC = () => {
           />
         )}
       </Box>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
